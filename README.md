@@ -8,26 +8,20 @@ Hex Editor for the Linux terminal, written in C.
 
 * **Hexadecimal View** Displays file contents in a traditional hex dump format, showing
 both hex bytes and their ASCII representations.
+* **NCurses TUI** Built with ncurses for a full-screen terminal-based user interface
+with box borders and key input handling. Editor window is centered in the terminal, with dimensions adjusted
+to file size and terminal size.
 * **Editable Buffer** Allows in-place editing of file contents directly in the hex view
 using hex digit keys (0–9, A–F).
 * **Cursor Navigation** Navigate through the file using arrow keys or Vim-style keys (h,
 j, k, l).
-* **Nibble-wise Editing** Edits are done nibble-by-nibble (high nibble first, then low nibble),
-offering precise byte manipulation.
-* **ASCII Rendering** Printable ASCII characters are shown alongside hex values, with
-non-printables rendered as dots (.).
 * **Scrolling Support** Automatically scrolls the view when the cursor moves beyond the
 visible region of the screen.
 * **File Loading and Saving** Loads binary files into memory and allows saving modified contents
 back to disk with the s key.
 * **Modification Tracking** Tracks whether the file has been modified and displays the modified
-status in the status line.
-* **Quit Confirmation Dialog** Warns about unsaved changes on quit (q) and prompts for confirmation
+status in the status line. Warns about unsaved changes on quit (q) and prompts for confirmation
 via a centered dialog box.
-* **Ncurses TUI** Built with ncurses for a full-screen terminal-based user interface
-with box borders and key input handling.
-* **Centered Interface Window** Editor window is centered in the terminal, with dimensions adjusted
-to file size and terminal size.
 * **Status Bar** Displays cursor position, modified status, and key hints at the
 bottom of the editor window.
 * **Resilient File Handling** Handles errors such as failure to open, read, or write files with
@@ -74,38 +68,14 @@ Keyboard Input:
 
 Here are some examples of how you can use **Hexagon** or any hex editor:
 
-#### 🔍 Binary File Inspection
-- View the raw bytes of executables, firmware, or binary blobs.
-- Explore undocumented or proprietary file formats.
-
-#### 🐞 Debugging and Reverse Engineering
-- Examine compiled machine code or memory dumps.
-- Identify magic numbers, file headers, or embedded metadata.
-- Reverse engineer file formats by observing changes byte-by-byte.
-
-#### ✍️ Manual File Patching
-- Edit specific bytes to modify hardcoded data or settings.
-- Example: Change a version number, toggle a flag, or fix corrupted bytes.
-
-#### 🎮 Game Save Editing
-- Modify save files to adjust stats, inventory, or unlock features.
-- Example: Find a known health value (`0x64` = 100 HP) and change it to `0xFF`.
-
-#### 🧪 Testing and Fuzzing
-- Inject patterns or corrupted bytes to test file parsers and software robustness.
-- Create edge cases or minimal binary test files.
-
-#### 🛠 File Repair
-- Manually fix format errors or headers in corrupted files.
-- Restore data when only a few bytes are missing or incorrect.
-
-#### 🔐 Security Auditing
-- Search for embedded payloads, shellcode, or obfuscated data.
-- Analyze metadata or content appended to common file types.
-
-#### 🗂 File Signature Detection
-- Identify file types by inspecting the magic number at the beginning.
-  - Example: `89 50 4E 47` = PNG, `25 50 44 46` = PDF.
+- 🔍 Binary File Inspection
+- 🐞 Debugging and Reverse Engineering
+- ✍️ Manual File Patching
+- 🎮 Game Save Editing
+- 🧪 Testing and Fuzzing
+- 🛠 File Repair
+- 🔐 Security Auditing
+- 🗂 File Signature Detection
 
 ---
 ## Credits
