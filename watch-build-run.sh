@@ -1,6 +1,6 @@
 #!/bin/bash
 
-FILE="hexedit.c"
+FILE="hexagon.c"
 BUILD_CMD="make"
 RUN_CMD="make run"
 

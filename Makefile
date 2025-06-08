@@ -3,8 +3,8 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -g
 LDFLAGS = -lncurses
-TARGET = hexedit
-SRC = hexedit.c
+TARGET = hexagon
+SRC = hexagon.c
 TESTFILE = test.bin
 
 .PHONY: all clean run
