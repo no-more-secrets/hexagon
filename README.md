@@ -1,13 +1,10 @@
 # Hexagon
 Hex Editor for the Linux terminal, written in C.
 
+## Screenshots
+![hexagon](https://github.com/user-attachments/assets/1045f62f-6aa5-4bec-b394-a56c24541379)
+
 ## Features
-* Adapts to terminal dimensions and centers the view.
-* Allows in-place editing of bytes (insert not supported).
-* Asks to save before exiting if changes are made.
-* Supports both arrow keys and vim keys (h/j/k/l) for navigation.
-* Status line with modified/save state and help.
-* Classic style TUI using the ncurses library.
 
 - **Hexadecimal View**
 Displays file contents in a traditional hex dump format, showing
@@ -22,8 +19,8 @@ Navigate through the file using arrow keys or Vim-style keys (h,
 j, k, l).
 
 - **Nibble-wise Editing**
-Edits are done nibble-by-nibble (high nibble first, then low nib-
-ble), offering precise byte manipulation.
+Edits are done nibble-by-nibble (high nibble first, then low nibble),
+offering precise byte manipulation.
 
 - **ASCII Rendering**
 Printable ASCII characters are shown alongside hex values, with
@@ -34,24 +31,24 @@ Automatically scrolls the view when the cursor moves beyond the
 visible region of the screen.
 
 - **File Loading and Saving**
-Loads binary files into memory and allows saving modified con-
-tents back to disk with the s key.
+Loads binary files into memory and allows saving modified contents
+back to disk with the s key.
 
 - **Modification Tracking**
-Tracks whether the file has been modified and displays the modi-
-fied status in the status line.
+Tracks whether the file has been modified and displays the modified
+status in the status line.
 
 - **Quit Confirmation Dialog**
-Warns about unsaved changes on quit (q) and prompts for confirma-
-tion via a centered dialog box.
+Warns about unsaved changes on quit (q) and prompts for confirmation
+via a centered dialog box.
 
 - **Ncurses TUI**
-Built with ncurses for a full-screen terminal-based user inter-
-face with box borders and key input handling.
+Built with ncurses for a full-screen terminal-based user interface
+with box borders and key input handling.
 
 - **Centered Interface Window**
-Editor window is centered in the terminal, with dimensions ad-
-justed to file size and terminal size.
+Editor window is centered in the terminal, with dimensions adjusted
+to file size and terminal size.
 
 - **Status Bar**
 Displays cursor position, modified status, and key hints at the
@@ -62,40 +59,74 @@ Handles errors such as failure to open, read, or write files with
 appropriate error messages.
 
 These features make it a functional and user-friendly terminal
-hex editor suitable for binary file inspection and in-place edit-
-ing.
-
-## Screenshots
-![hexagon](https://github.com/user-attachments/assets/1045f62f-6aa5-4bec-b394-a56c24541379)
+hex editor suitable for binary file inspection and in-place editing.
 
 ## How to Build
 After cloning the repo, just run `make`:
-```bash
+```sh
 $ make
 ```
 Then to run:
-```
+```sh
 $ ./hexagon <file>
 ```
-Or for a quicker start, run the following to build, generate a test file (`test.bin`), and then open it in the editor:
-```
+Or for a quicker start, run the following to build, generate a
+test file (`test.bin`), and then open it in the editor:
+```sh
 $ make run
 ```
-
 ## How to Use
 
-| **Key(s)**                    | **Action**                       | **Description**                                                                                                                                                                                                                      |
-| ----------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Arrow Up** or **k**         | Move cursor up                   | Moves the cursor one line upward (previous set of 16 bytes) if within bounds.                                                                                                                                                        |
-| **Arrow Down** or **j**       | Move cursor down                 | Moves the cursor one line downward (next set of 16 bytes) if within bounds.                                                                                                                                                          |
-| **Arrow Left** or **h**       | Move cursor left                 | Moves the cursor one byte to the left. In the quit confirmation dialog, it shifts the focus to the "Cancel" button.                                                                                                                  |
-| **Arrow Right** or **l**      | Move cursor right                | Moves the cursor one byte to the right. In the quit confirmation dialog, it shifts the focus to the "Quit" button.                                                                                                                   |
-| **Hex Digit Keys (0-9, A-F)** | Edit current byte                | When a hex digit is entered, it updates the current byte’s high nibble (if editing the high nibble) or low nibble (if editing the low nibble). After finishing the low nibble, the cursor automatically moves one byte to the right. |
-| **s**                         | Save file                        | Saves the changes made to the file.                                                                                                                                                                                                  |
-| **q**                         | Quit editor                      | Initiates the quit routine. If there are unsaved changes, a confirmation dialog is displayed.                                                                                                                                        |
-| **Enter** (in dialog)         | Confirm selection in quit dialog | In the quit confirmation dialog, pressing Enter accepts the highlighted option (either to quit or cancel).                                                                                                                           |
-| **ESC** (in dialog)           | Cancel quit dialog               | Cancels the quit confirmation dialog, keeping the editor active (focus remains on "Cancel").                                                                                                                                         |
+| Key          | Action                               |
+| ------------ | ------------------------------------ |
+| `←` / `h`    | Move cursor left                     |
+| `→` / `l`    | Move cursor right                    |
+| `↑` / `k`    | Move cursor up                       |
+| `↓` / `j`    | Move cursor down                     |
+| `0–9`, `A–F` | Enter hex digit (nibble editing)     |
+| `s`          | Save file                            |
+| `q`          | Quit (with confirmation if modified) |
+| `Enter`      | Confirm quit in dialog               |
+| `Esc`        | Cancel quit in dialog                |
 
+## 🧰 Use Cases
+
+Here are some examples of how you can use **Hexagon** or any hex editor:
+
+### 🔍 Binary File Inspection
+- View the raw bytes of executables, firmware, or binary blobs.
+- Explore undocumented or proprietary file formats.
+
+### 🐞 Debugging and Reverse Engineering
+- Examine compiled machine code or memory dumps.
+- Identify magic numbers, file headers, or embedded metadata.
+- Reverse engineer file formats by observing changes byte-by-byte.
+
+### ✍️ Manual File Patching
+- Edit specific bytes to modify hardcoded data or settings.
+- Example: Change a version number, toggle a flag, or fix corrupted bytes.
+
+### 🎮 Game Save Editing
+- Modify save files to adjust stats, inventory, or unlock features.
+- Example: Find a known health value (`0x64` = 100 HP) and change it to `0xFF`.
+
+### 🧪 Testing and Fuzzing
+- Inject patterns or corrupted bytes to test file parsers and software robustness.
+- Create edge cases or minimal binary test files.
+
+### 🛠 File Repair
+- Manually fix format errors or headers in corrupted files.
+- Restore data when only a few bytes are missing or incorrect.
+
+### 🔐 Security Auditing
+- Search for embedded payloads, shellcode, or obfuscated data.
+- Analyze metadata or content appended to common file types.
+
+### 🗂 File Signature Detection
+- Identify file types by inspecting the magic number at the beginning.
+  - Example: `89 50 4E 47` = PNG, `25 50 44 46` = PDF.
+
+---
 ## Credits
 The entire contents of this repository were written by ChatGPT
 with some guidance, testing, and minor bug fixes by myself. This
