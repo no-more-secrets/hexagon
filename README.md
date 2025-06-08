@@ -1,7 +1,7 @@
 # Hexagon
 Hex Editor for the Linux terminal, written in C.
 
-## Screenshots
+## Screenshot
 ![hexagon](https://github.com/user-attachments/assets/1045f62f-6aa5-4bec-b394-a56c24541379)
 
 ## Features
