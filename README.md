@@ -55,6 +55,7 @@ $ make run
 Keyboard Input:
 
 <center>
+
 | Key          | Action                               |
 | ------------ | ------------------------------------ |
 | `←` / `h`    | Move cursor left                     |
@@ -66,6 +67,7 @@ Keyboard Input:
 | `q`          | Quit (with confirmation if modified) |
 | `Enter`      | Confirm quit in dialog               |
 | `Esc`        | Cancel quit in dialog                |
+
 </center>
 
 ## 🧰 Use Cases
