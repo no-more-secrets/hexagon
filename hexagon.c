@@ -1,96 +1,59 @@
 #include <ctype.h>
-#include <fcntl.h>
 #include <ncurses.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #define BYTES_PER_LINE 16
-#define MAX_FILE_SIZE  1048576 // 1 MB max
 
-unsigned char buffer[MAX_FILE_SIZE];
-size_t file_size  = 0;
-size_t cursor_pos = 0;
-char filename[256];
+unsigned char *buffer = NULL;
+size_t file_size      = 0;
 
-void load_file( const char *path ) {
-  int fd = open( path, O_RDONLY );
-  if( fd < 0 ) {
-    perror( "open" );
+int cursor_pos = 0; // Current byte index in buffer
+int offset     = 0; // Offset of first visible byte in buffer
+int high_nibble =
+    1; // Editing state: 1 = editing high nibble, 0 = low nibble
+int modified = 0; // Buffer modified flag
+
+void load_file( const char *filename ) {
+  FILE *f = fopen( filename, "rb" );
+  if( !f ) {
+    perror( "Failed to open file" );
     exit( 1 );
   }
-
-  ssize_t bytes_read = read( fd, buffer, MAX_FILE_SIZE );
-  if( bytes_read == -1 ) {
-    perror( "read" );
-    close( fd );
+  fseek( f, 0, SEEK_END );
+  file_size = ftell( f );
+  fseek( f, 0, SEEK_SET );
+  buffer = malloc( file_size );
+  if( !buffer ) {
+    perror( "Out of memory" );
+    fclose( f );
     exit( 1 );
   }
-  file_size = bytes_read;
-
-  close( fd );
-  strncpy( filename, path, sizeof( filename ) );
+  fread( buffer, 1, file_size, f );
+  fclose( f );
 }
 
-void save_file() {
-  int fd = open( filename, O_WRONLY | O_TRUNC );
-  if( fd < 0 ) {
-    perror( "save open" );
+void save_file( const char *filename ) {
+  FILE *f = fopen( filename, "wb" );
+  if( !f ) {
+    perror( "Failed to save file" );
     return;
   }
-
-  if( write( fd, buffer, file_size ) != (ssize_t)file_size ) {
-    perror( "write" );
-  }
-
-  close( fd );
+  fwrite( buffer, 1, file_size, f );
+  fclose( f );
+  modified = 0;
 }
 
-void draw_editor( WINDOW *win, size_t offset ) {
-  werase( win );
-  box( win, 0, 0 );
+int confirm_quit( WINDOW *parent_win ) {
+  int height = 7, width = 40;
+  int starty = ( LINES - height ) / 2;
+  int startx = ( COLS - width ) / 2;
 
-  for( int i = 0; i < getmaxy( win ) - 2; i++ ) {
-    size_t line_offset = offset + i * BYTES_PER_LINE;
-    if( line_offset >= file_size ) break;
-
-    mvwprintw( win, i + 1, 1, "%08lx: ", line_offset );
-
-    for( int j = 0; j < BYTES_PER_LINE; j++ ) {
-      size_t idx = line_offset + j;
-      if( idx < file_size )
-        wprintw( win, "%02x ", buffer[idx] );
-      else
-        wprintw( win, "   " );
-    }
-
-    wprintw( win, " " );
-    for( int j = 0; j < BYTES_PER_LINE; j++ ) {
-      size_t idx = line_offset + j;
-      if( idx < file_size ) {
-        char c = buffer[idx];
-        wprintw( win, "%c", isprint( c ) ? c : '.' );
-      }
-    }
-  }
-
-  // Move cursor
-  size_t row = ( cursor_pos - offset ) / BYTES_PER_LINE;
-  size_t col = ( cursor_pos % BYTES_PER_LINE ) * 3 + 10;
-  if( cursor_pos < file_size ) wmove( win, row + 1, col );
-
-  wrefresh( win );
-}
-
-// Function to show confirmation dialog, returns 1 if user
-// confirms quit, 0 to cancel
-int confirm_quit() {
-  int width = 40, height = 7;
-  int starty  = ( LINES - height ) / 2;
-  int startx  = ( COLS - width ) / 2;
   WINDOW *dlg = newwin( height, width, starty, startx );
   box( dlg, 0, 0 );
+  keypad( dlg, TRUE );
+  curs_set( 0 );
 
   const char *msg1 = "Unsaved changes.";
   const char *msg2 = "Quit without saving?";
@@ -99,16 +62,11 @@ int confirm_quit() {
   mvwprintw( dlg, 2, ( width - (int)strlen( msg2 ) ) / 2, "%s",
              msg2 );
 
-  // Buttons
   const char *btn_cancel = " Cancel ";
   const char *btn_quit   = " Quit ";
   int focus              = 0; // 0 = cancel, 1 = quit
 
-  keypad( dlg, TRUE );
-  curs_set( 0 );
-
   while( 1 ) {
-    // Draw buttons
     if( focus == 0 ) {
       wattron( dlg, A_REVERSE );
       mvwprintw( dlg, height - 3,
@@ -145,74 +103,170 @@ int confirm_quit() {
 
   delwin( dlg );
   curs_set( 1 );
+  touchwin( parent_win );
+  wrefresh( parent_win );
+
   return focus == 1;
 }
 
-void run_editor() {
+void draw_editor( WINDOW *win ) {
+  werase( win );
+  box( win, 0, 0 );
+
+  int win_height, win_width;
+  getmaxyx( win, win_height, win_width );
+
+  // Draw title bar
+  mvwprintw( win, 0, ( win_width - 30 ) / 2,
+             " Hexagon: ncurses Hex Editor " );
+
+  // Draw column headers for hex and ascii
+  mvwprintw( win, 1, 1, "Offset  " );
+  for( int i = 0; i < BYTES_PER_LINE; i++ ) {
+    mvwprintw( win, 1, 10 + i * 3, "%02X", i );
+  }
+  mvwprintw( win, 1, 10 + BYTES_PER_LINE * 3 + 2, "ASCII" );
+
+  // Draw horizontal separator with T junctions at the sides
+  mvwaddch( win, 2, 0, ACS_LTEE );
+  mvwhline( win, 2, 1, ACS_HLINE, win_width - 2 );
+  mvwaddch( win, 2, win_width - 1, ACS_RTEE );
+
+  // Draw visible bytes
+  for( int line = 0; line < win_height - 4; line++ ) {
+    int line_offset = offset + line * BYTES_PER_LINE;
+    if( line_offset >= (ssize_t)file_size ) break;
+
+    // Draw offset (address)
+    mvwprintw( win, line + 3, 1, "%08X:", line_offset );
+
+    // Draw hex bytes
+    for( int i = 0; i < BYTES_PER_LINE &&
+                    ( line_offset + i ) < (ssize_t)file_size;
+         i++ ) {
+      unsigned char byte = buffer[line_offset + i];
+      mvwprintw( win, line + 3, 10 + i * 3, "%02X", byte );
+    }
+
+    // Draw ASCII chars
+    for( int i = 0; i < BYTES_PER_LINE &&
+                    ( line_offset + i ) < (ssize_t)file_size;
+         i++ ) {
+      unsigned char c = buffer[line_offset + i];
+      mvwaddch( win, line + 3, 10 + BYTES_PER_LINE * 3 + 2 + i,
+                ( c >= 32 && c < 127 ) ? c : '.' );
+    }
+  }
+
+  // Draw status line
+  mvwprintw( win, win_height - 1, 1,
+             "Cursor: %04X  Modified: %s  Use arrows to move, "
+             "s=save, q=quit",
+             cursor_pos, modified ? "YES" : "NO" );
+
+  // Calculate cursor position inside window
+  int cursor_line = ( cursor_pos - offset ) / BYTES_PER_LINE;
+  int cursor_col  = ( cursor_pos - offset ) % BYTES_PER_LINE;
+  int cursor_x = 10 + cursor_col * 3 + ( high_nibble ? 0 : 1 );
+  int cursor_y = cursor_line + 3;
+
+  if( cursor_y >= 2 && cursor_y < win_height - 1 )
+    wmove( win, cursor_y, cursor_x );
+  else
+    wmove( win, win_height - 1, 1 ); // fallback position
+
+  wrefresh( win );
+}
+
+void run_editor( const char *filename ) {
+  load_file( filename );
+
   initscr();
   noecho();
   cbreak();
   keypad( stdscr, TRUE );
   curs_set( 1 );
 
-  int win_height = 24;
-  int win_width  = 80;
-  int starty     = ( LINES - win_height ) / 2;
-  int startx     = ( COLS - win_width ) / 2;
+  int base_lines =
+      ( file_size + BYTES_PER_LINE - 1 ) / BYTES_PER_LINE;
+  int min_height = base_lines + 4; // offset + headers + status
+  int win_height = min_height < LINES ? min_height : LINES;
+  // int win_width  = COLS < 100 ? 100 : COLS;
+  int win_width = 77;
+  int starty    = ( LINES - win_height ) / 2;
+  int startx    = ( COLS - win_width ) / 2;
   WINDOW *win = newwin( win_height, win_width, starty, startx );
-  keypad( win, TRUE );     // enable keypad for main window
-  intrflush( win, FALSE ); // prevent input flush on interrupts
-
-  size_t offset = 0;
-
-  int high_nibble = 1;
-  int modified    = 0;
+  box( win, 0, 0 );
+  keypad( win, TRUE );
 
   while( 1 ) {
-    draw_editor( win, offset );
+    draw_editor( win );
+
     int ch = wgetch( win );
 
-    if( ch == KEY_DOWN &&
-        cursor_pos + BYTES_PER_LINE < file_size ) {
-      cursor_pos += BYTES_PER_LINE;
-      if( (ssize_t)( cursor_pos / BYTES_PER_LINE ) >= LINES - 2 )
-        offset += BYTES_PER_LINE;
-      high_nibble = 1; // Reset on cursor move
-    } else if( ch == KEY_UP && cursor_pos >= BYTES_PER_LINE ) {
-      cursor_pos -= BYTES_PER_LINE;
-      if( ( cursor_pos / BYTES_PER_LINE ) <
-          offset / BYTES_PER_LINE )
-        offset -= BYTES_PER_LINE;
-      high_nibble = 1;
-    } else if( ch == KEY_LEFT && cursor_pos > 0 ) {
-      cursor_pos--;
-      high_nibble = 1;
-    } else if( ch == KEY_RIGHT && cursor_pos + 1 < file_size ) {
-      cursor_pos++;
-      high_nibble = 1;
+    if( ch == KEY_DOWN ) {
+      if( cursor_pos + BYTES_PER_LINE < (ssize_t)file_size ) {
+        cursor_pos += BYTES_PER_LINE;
+        if( cursor_pos >=
+            offset + ( win_height - 3 ) * BYTES_PER_LINE ) {
+          offset += BYTES_PER_LINE;
+        }
+        high_nibble = 1;
+      }
+    } else if( ch == KEY_UP ) {
+      if( cursor_pos >= BYTES_PER_LINE ) {
+        cursor_pos -= BYTES_PER_LINE;
+        if( cursor_pos < offset ) {
+          offset -= BYTES_PER_LINE;
+          if( offset < 0 ) offset = 0;
+        }
+        high_nibble = 1;
+      }
+    } else if( ch == KEY_LEFT ) {
+      if( cursor_pos > 0 ) {
+        cursor_pos--;
+        if( cursor_pos < offset ) {
+          offset -= BYTES_PER_LINE;
+          if( offset < 0 ) offset = 0;
+        }
+        high_nibble = 1;
+      }
+    } else if( ch == KEY_RIGHT ) {
+      if( cursor_pos + 1 < (ssize_t)file_size ) {
+        cursor_pos++;
+        if( cursor_pos >=
+            offset + ( win_height - 3 ) * BYTES_PER_LINE ) {
+          offset += BYTES_PER_LINE;
+        }
+        high_nibble = 1;
+      }
     } else if( isxdigit( ch ) ) {
       unsigned char val =
           isdigit( ch ) ? ch - '0' : tolower( ch ) - 'a' + 10;
-
-      if( cursor_pos < file_size ) {
+      if( cursor_pos < (ssize_t)file_size ) {
         if( high_nibble ) {
           buffer[cursor_pos] =
               ( val << 4 ) | ( buffer[cursor_pos] & 0x0F );
+          high_nibble = 0;
         } else {
           buffer[cursor_pos] =
               ( buffer[cursor_pos] & 0xF0 ) | val;
           cursor_pos++;
+          high_nibble = 1;
+          // Scroll if cursor moves out of view
+          if( cursor_pos >=
+              offset + ( win_height - 3 ) * BYTES_PER_LINE ) {
+            offset += BYTES_PER_LINE;
+          }
         }
-        high_nibble = !high_nibble;
-        modified    = 1;
+        modified = 1;
       }
     } else if( ch == 's' ) {
-      save_file();
-      modified = 0; // reset modified flag on save
+      save_file( filename );
     } else if( ch == 'q' ) {
       if( modified ) {
-        int confirm = confirm_quit();
-        if( confirm ) break;
+        int quit = confirm_quit( win );
+        if( quit ) break;
         // else continue editing
       } else {
         break;
@@ -222,15 +276,17 @@ void run_editor() {
 
   delwin( win );
   endwin();
+
+  free( buffer );
 }
 
-int main( int argc, char *argv[] ) {
-  if( argc != 2 ) {
-    fprintf( stderr, "Usage: %s <file>\n", argv[0] );
+int main( int argc, char **argv ) {
+  if( argc < 2 ) {
+    fprintf( stderr, "Usage: %s filename\n", argv[0] );
     return 1;
   }
 
-  load_file( argv[1] );
-  run_editor();
+  run_editor( argv[1] );
+
   return 0;
 }
