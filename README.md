@@ -93,36 +93,36 @@ $ make run
 
 Here are some examples of how you can use **Hexagon** or any hex editor:
 
-### 🔍 Binary File Inspection
+#### 🔍 Binary File Inspection
 - View the raw bytes of executables, firmware, or binary blobs.
 - Explore undocumented or proprietary file formats.
 
-### 🐞 Debugging and Reverse Engineering
+#### 🐞 Debugging and Reverse Engineering
 - Examine compiled machine code or memory dumps.
 - Identify magic numbers, file headers, or embedded metadata.
 - Reverse engineer file formats by observing changes byte-by-byte.
 
-### ✍️ Manual File Patching
+#### ✍️ Manual File Patching
 - Edit specific bytes to modify hardcoded data or settings.
 - Example: Change a version number, toggle a flag, or fix corrupted bytes.
 
-### 🎮 Game Save Editing
+#### 🎮 Game Save Editing
 - Modify save files to adjust stats, inventory, or unlock features.
 - Example: Find a known health value (`0x64` = 100 HP) and change it to `0xFF`.
 
-### 🧪 Testing and Fuzzing
+#### 🧪 Testing and Fuzzing
 - Inject patterns or corrupted bytes to test file parsers and software robustness.
 - Create edge cases or minimal binary test files.
 
-### 🛠 File Repair
+#### 🛠 File Repair
 - Manually fix format errors or headers in corrupted files.
 - Restore data when only a few bytes are missing or incorrect.
 
-### 🔐 Security Auditing
+#### 🔐 Security Auditing
 - Search for embedded payloads, shellcode, or obfuscated data.
 - Analyze metadata or content appended to common file types.
 
-### 🗂 File Signature Detection
+#### 🗂 File Signature Detection
 - Identify file types by inspecting the magic number at the beginning.
   - Example: `89 50 4E 47` = PNG, `25 50 44 46` = PDF.
 
