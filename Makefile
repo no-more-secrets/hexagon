@@ -16,7 +16,7 @@ $(TARGET): $(SRC) $(lastword $(MAKEFILE_LIST))
 
 # Declare that test.bin is a file we can build
 $(TESTFILE):
-	head -c 256 /dev/urandom > $(TESTFILE)
+	head -c 1024 /dev/urandom > $(TESTFILE)
 
 run: $(TARGET) $(TESTFILE)
 	./$(TARGET) $(TESTFILE)
