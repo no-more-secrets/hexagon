@@ -1,7 +1,7 @@
 # Makefile for ncurses-based hex editor
 
 CC = gcc
-CFLAGS = -Wall -Wextra -g
+CFLAGS = -Wall -Wextra -g -O3
 LDFLAGS = -lncurses
 TARGET = hexagon
 SRC = hexagon.c

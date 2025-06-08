@@ -30,7 +30,7 @@ void load_file( const char *filename ) {
     fclose( f );
     exit( 1 );
   }
-  fread( buffer, 1, file_size, f );
+  [[maybe_unused]] long x = fread( buffer, 1, file_size, f );
   fclose( f );
 }
 
