@@ -11,7 +11,7 @@ TESTFILE = test.bin
 
 all: $(TARGET)
 
-$(TARGET): $(SRC)
+$(TARGET): $(SRC) $(lastword $(MAKEFILE_LIST))
 	$(CC) $(CFLAGS) -o $(TARGET) $(SRC) $(LDFLAGS)
 
 # Declare that test.bin is a file we can build
