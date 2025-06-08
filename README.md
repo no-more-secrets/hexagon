@@ -54,7 +54,7 @@ $ make run
 
 Keyboard Input:
 
-<center>
+<div align="center">
 
 | Key          | Action                               |
 | ------------ | ------------------------------------ |
@@ -68,7 +68,7 @@ Keyboard Input:
 | `Enter`      | Confirm quit in dialog               |
 | `Esc`        | Cancel quit in dialog                |
 
-</center>
+</div>
 
 ## 🧰 Use Cases
 
