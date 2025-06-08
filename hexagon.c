@@ -89,9 +89,9 @@ int confirm_quit( WINDOW *parent_win ) {
     wrefresh( dlg );
 
     int c = wgetch( dlg );
-    if( c == KEY_LEFT || c == '\t' ) {
+    if( ( c == KEY_LEFT || c == 'h' ) || c == '\t' ) {
       focus = 0;
-    } else if( c == KEY_RIGHT ) {
+    } else if( c == KEY_RIGHT || c == 'l' ) {
       focus = 1;
     } else if( c == '\n' || c == KEY_ENTER ) {
       break;
@@ -204,7 +204,7 @@ void run_editor( const char *filename ) {
 
     int ch = wgetch( win );
 
-    if( ch == KEY_DOWN ) {
+    if( ch == KEY_DOWN || ch == 'j' ) {
       if( cursor_pos + BYTES_PER_LINE < (ssize_t)file_size ) {
         cursor_pos += BYTES_PER_LINE;
         if( cursor_pos >=
@@ -213,7 +213,7 @@ void run_editor( const char *filename ) {
         }
         high_nibble = 1;
       }
-    } else if( ch == KEY_UP ) {
+    } else if( ch == KEY_UP || ch == 'k' ) {
       if( cursor_pos >= BYTES_PER_LINE ) {
         cursor_pos -= BYTES_PER_LINE;
         if( cursor_pos < offset ) {
@@ -222,7 +222,7 @@ void run_editor( const char *filename ) {
         }
         high_nibble = 1;
       }
-    } else if( ch == KEY_LEFT ) {
+    } else if( ch == KEY_LEFT || ch == 'h' ) {
       if( cursor_pos > 0 ) {
         cursor_pos--;
         if( cursor_pos < offset ) {
@@ -231,7 +231,7 @@ void run_editor( const char *filename ) {
         }
         high_nibble = 1;
       }
-    } else if( ch == KEY_RIGHT ) {
+    } else if( ch == KEY_RIGHT || ch == 'l' ) {
       if( cursor_pos + 1 < (ssize_t)file_size ) {
         cursor_pos++;
         if( cursor_pos >=
