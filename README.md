@@ -2,15 +2,15 @@
 Hex Editor for the Linux terminal, written in C.
 
 ## Screenshot
-![hexagon](https://github.com/user-attachments/assets/1045f62f-6aa5-4bec-b394-a56c24541379)
+![hexagon](https://github.com/user-attachments/assets/75a49044-66bc-486b-a60c-d6e21da9525b)
 
 ## Features
 
 * **Hexadecimal View** Displays file contents in a traditional hex dump format, showing
 both hex bytes and their ASCII representations.
-* **NCurses TUI** Built with ncurses for a full-screen terminal-based user interface
-with box borders and key input handling. Editor window is centered in the terminal, with dimensions adjusted
-to file size and terminal size.
+* **NCurses Color TUI** Built with ncurses for a full-screen, multi-colored, terminal-based user
+interface with box borders and key input handling.  The editor window is centered in the
+terminal, with dimensions adjusted to file size and terminal size.
 * **Editable Buffer** Allows in-place editing of file contents directly in the hex view
 using hex digit keys (0–9, A–F).
 * **Cursor Navigation** Navigate through the file using arrow keys or Vim-style keys (h,
