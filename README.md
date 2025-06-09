@@ -76,9 +76,3 @@ Here are some examples of how you can use **Hexagon** or any hex editor:
 - 🛠 File Repair
 - 🔐 Security Auditing
 - 🗂 File Signature Detection
-
----
-## Credits
-The entire contents of this repository were written by ChatGPT
-with some guidance, testing, and minor bug fixes by myself. This
-is a real program that really works... try it out!
