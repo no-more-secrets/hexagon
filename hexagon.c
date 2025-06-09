@@ -6,6 +6,12 @@
 
 #define BYTES_PER_LINE 16
 
+#define HEADER_LINES   3
+#define STATUS_LINES   1
+#define NON_BODY_LINES ( HEADER_LINES + STATUS_LINES )
+
+#define COLOR_BRIGHT_WHITE 255
+
 unsigned char *buffer = NULL;
 size_t file_size      = 0;
 
@@ -69,19 +75,19 @@ int confirm_quit( WINDOW *parent_win ) {
   while( 1 ) {
     if( focus == 0 ) {
       wattron( dlg, A_REVERSE );
-      mvwprintw( dlg, height - 3,
+      mvwprintw( dlg, height - NON_BODY_LINES,
                  width / 4 - (int)strlen( btn_cancel ) / 2, "%s",
                  btn_cancel );
       wattroff( dlg, A_REVERSE );
-      mvwprintw( dlg, height - 3,
+      mvwprintw( dlg, height - NON_BODY_LINES,
                  3 * width / 4 - (int)strlen( btn_quit ) / 2,
                  "%s", btn_quit );
     } else {
-      mvwprintw( dlg, height - 3,
+      mvwprintw( dlg, height - NON_BODY_LINES,
                  width / 4 - (int)strlen( btn_cancel ) / 2, "%s",
                  btn_cancel );
       wattron( dlg, A_REVERSE );
-      mvwprintw( dlg, height - 3,
+      mvwprintw( dlg, height - NON_BODY_LINES,
                  3 * width / 4 - (int)strlen( btn_quit ) / 2,
                  "%s", btn_quit );
       wattroff( dlg, A_REVERSE );
@@ -89,7 +95,9 @@ int confirm_quit( WINDOW *parent_win ) {
     wrefresh( dlg );
 
     int c = wgetch( dlg );
-    if( ( c == KEY_LEFT || c == 'h' ) || c == '\t' ) {
+    if( c == '\t' ) {
+      focus = !focus;
+    } else if( c == KEY_LEFT || c == 'h' ) {
       focus = 0;
     } else if( c == KEY_RIGHT || c == 'l' ) {
       focus = 1;
@@ -123,9 +131,9 @@ void draw_editor( WINDOW *win ) {
   // Draw column headers for hex and ascii
   mvwprintw( win, 1, 1, "Offset  " );
   for( int i = 0; i < BYTES_PER_LINE; i++ ) {
-    mvwprintw( win, 1, 10 + i * 3, "%02X", i );
+    mvwprintw( win, 1, 11 + i * 3, "%02X", i );
   }
-  mvwprintw( win, 1, 10 + BYTES_PER_LINE * 3 + 2, "ASCII" );
+  // mvwprintw( win, 1, 11 + BYTES_PER_LINE * 3 + 1, "ASCII" );
 
   // Draw horizontal separator with T junctions at the sides
   mvwaddch( win, 2, 0, ACS_LTEE );
@@ -133,28 +141,41 @@ void draw_editor( WINDOW *win ) {
   mvwaddch( win, 2, win_width - 1, ACS_RTEE );
 
   // Draw visible bytes
-  for( int line = 0; line < win_height - 4; line++ ) {
+  for( int line = 0; line < win_height - NON_BODY_LINES;
+       line++ ) {
     int line_offset = offset + line * BYTES_PER_LINE;
     if( line_offset >= (ssize_t)file_size ) break;
 
     // Draw offset (address)
-    mvwprintw( win, line + 3, 1, "%08X:", line_offset );
+    wattron( win, COLOR_PAIR( 1 ) );
+    mvwprintw( win, line + 3, 1, "%08X", line_offset );
+    wattroff( win, COLOR_PAIR( 1 ) );
+    mvwprintw( win, line + 3, 1 + 8, ":" );
 
     // Draw hex bytes
     for( int i = 0; i < BYTES_PER_LINE &&
                     ( line_offset + i ) < (ssize_t)file_size;
          i++ ) {
       unsigned char byte = buffer[line_offset + i];
-      mvwprintw( win, line + 3, 10 + i * 3, "%02X", byte );
+      if( !byte ) wattron( win, COLOR_PAIR( 4 ) );
+      if( byte == 0xff ) wattron( win, COLOR_PAIR( 2 ) );
+      mvwprintw( win, line + 3, 11 + i * 3, "%02X", byte );
+      if( !byte ) wattroff( win, COLOR_PAIR( 4 ) );
+      if( byte == 0xff ) wattroff( win, COLOR_PAIR( 2 ) );
     }
 
     // Draw ASCII chars
     for( int i = 0; i < BYTES_PER_LINE &&
                     ( line_offset + i ) < (ssize_t)file_size;
          i++ ) {
-      unsigned char c = buffer[line_offset + i];
-      mvwaddch( win, line + 3, 10 + BYTES_PER_LINE * 3 + 2 + i,
-                ( c >= 32 && c < 127 ) ? c : '.' );
+      unsigned char c  = buffer[line_offset + i];
+      int is_printable = ( c >= 32 && c < 127 );
+      wattron( win, COLOR_PAIR( 5 ) );
+      if( !is_printable ) wattron( win, COLOR_PAIR( 2 ) );
+      mvwaddch( win, line + 3, 11 + BYTES_PER_LINE * 3 + 1 + i,
+                is_printable ? c : '.' );
+      if( !is_printable ) wattroff( win, COLOR_PAIR( 2 ) );
+      wattroff( win, COLOR_PAIR( 5 ) );
     }
   }
 
@@ -167,7 +188,7 @@ void draw_editor( WINDOW *win ) {
   // Calculate cursor position inside window
   int cursor_line = ( cursor_pos - offset ) / BYTES_PER_LINE;
   int cursor_col  = ( cursor_pos - offset ) % BYTES_PER_LINE;
-  int cursor_x = 10 + cursor_col * 3 + ( high_nibble ? 0 : 1 );
+  int cursor_x = 11 + cursor_col * 3 + ( high_nibble ? 0 : 1 );
   int cursor_y = cursor_line + 3;
 
   if( cursor_y >= 2 && cursor_y < win_height - 1 )
@@ -186,6 +207,15 @@ void run_editor( const char *filename ) {
   cbreak();
   keypad( stdscr, TRUE );
   curs_set( 1 );
+
+  start_color();
+  init_color( COLOR_WHITE, 800, 800, 800 );
+  init_color( COLOR_GREEN, 700, 800, 400 );
+  init_pair( 1, COLOR_MAGENTA, COLOR_BLACK );
+  init_pair( 2, COLOR_WHITE, COLOR_BLACK );
+  init_pair( 3, COLOR_CYAN, COLOR_BLACK );
+  init_pair( 4, COLOR_BLUE, COLOR_BLACK );
+  init_pair( 5, COLOR_GREEN, COLOR_BLACK );
 
   int base_lines =
       ( file_size + BYTES_PER_LINE - 1 ) / BYTES_PER_LINE;
@@ -208,7 +238,8 @@ void run_editor( const char *filename ) {
       if( cursor_pos + BYTES_PER_LINE < (ssize_t)file_size ) {
         cursor_pos += BYTES_PER_LINE;
         if( cursor_pos >=
-            offset + ( win_height - 3 ) * BYTES_PER_LINE ) {
+            offset + ( win_height - NON_BODY_LINES ) *
+                         BYTES_PER_LINE ) {
           offset += BYTES_PER_LINE;
         }
         high_nibble = 1;
@@ -235,7 +266,8 @@ void run_editor( const char *filename ) {
       if( cursor_pos + 1 < (ssize_t)file_size ) {
         cursor_pos++;
         if( cursor_pos >=
-            offset + ( win_height - 3 ) * BYTES_PER_LINE ) {
+            offset + ( win_height - NON_BODY_LINES ) *
+                         BYTES_PER_LINE ) {
           offset += BYTES_PER_LINE;
         }
         high_nibble = 1;
@@ -255,7 +287,8 @@ void run_editor( const char *filename ) {
           high_nibble = 1;
           // Scroll if cursor moves out of view
           if( cursor_pos >=
-              offset + ( win_height - 3 ) * BYTES_PER_LINE ) {
+              offset + ( win_height - NON_BODY_LINES ) *
+                           BYTES_PER_LINE ) {
             offset += BYTES_PER_LINE;
           }
         }
